@@ -34,6 +34,7 @@ const AddTransactionDetails = async (req, res) => {
       senderPrivate: req.body.senderPrivate,
       reciever: req.body.reciever,
       amount: req.body.amount,
+      txId : ""
     };
     if (
       transact.sender !== "" &&
@@ -41,16 +42,16 @@ const AddTransactionDetails = async (req, res) => {
       transact.reciever !== "" &&
       transact.amount !== ""
     ) {
-      var nonce = await web3.eth
-        .getTransactionCount(transact.sender)
-        .then()
-        .catch((err) =>
-          res.send({
-            code: "400",
-            status: "failed",
-            errorMessage: err,
-          })
-        );
+      // var nonce = await web3.eth
+      //   .getTransactionCount(transact.sender)
+      //   .then()
+      //   .catch((err) =>
+      //     res.send({
+      //       code: "400",
+      //       status: "failed",
+      //       errorMessage: err,
+      //     })
+      //   );
       web3.eth.getBalance(transact.sender, async (err, result) => {
         if (err) {
           console.log(err);
@@ -64,25 +65,26 @@ const AddTransactionDetails = async (req, res) => {
           });
           console.log("insufficient balance");
         }
-        let gasPrice = await getCurrentGasPrices()
-          .then()
-          .catch((err) =>
-            res.send({
-              code: "400",
-              status: "failed",
-              errorMessage: err,
-            })
-          );
+        // let gasPrice = await getCurrentGasPrices()
+        //   .then()
+        //   .catch((err) =>
+        //     res.send({
+        //       code: "400",
+        //       status: "failed",
+        //       errorMessage: err,
+        //     })
+        //   );
         let object = {
           to: transact.reciever,
           value: web3.utils.toHex(
             web3.utils.toWei(transact.amount.toString(), "ether")
           ),
           gas: 21000,
-          gasPrice: gasPrice.low * 1000000000,
-          nonce: nonce,
-          chainId: 4,
+          // gasPrice: gasPrice.low * 1000000000,
+          // nonce: nonce,
+          // chainId: 4,
         };
+        
         const data = await web3.eth.accounts
           .signTransaction(object, transact.senderPrivate)
           .then()
@@ -92,22 +94,24 @@ const AddTransactionDetails = async (req, res) => {
               status: "failed",
               errorMessage: err,
               message: "not able to sign",
+
             })
           );
         const createReceipt = await web3.eth
           .sendSignedTransaction(data.rawTransaction)
-          // .then()
-          // .catch((err) => {
-          //   console.log(err)
-          //   res.send({
-          //     code: "400",
-          //     status: "failed",
-          //     errorMessage: err,
-          //     message: "not able to send transaction",
-          //   });
-          // });
+          .then()
+          .catch((err) => {
+            console.log(err)
+            res.send({
+              code: "400",
+              status: "failed",
+              errorMessage: err,
+              message: "not able to send transaction",
+            });
+          });
         console.log(createReceipt.transactionHash);
         if (createReceipt.status) {
+          transact.txId = createReceipt.transactionHash;
           const newTransaction = new userTransaction(transact);
           bcrypt.genSalt(5, (err, salt) => {
             bcrypt.hash(newTransaction.senderPrivate, salt, (err, hash) => {
@@ -119,7 +123,12 @@ const AddTransactionDetails = async (req, res) => {
                     code: "200",
                     status: "success",
                     message: "data saved and transaction succesful",
-                    data: transaction,
+                    data: {
+                      sender : transaction.sender,
+                    reciever : transaction.reciever,
+                    amount : transaction.amount,
+                    transactionId : transaction.txId
+                    }
                   });
                 })
                 .catch((err) => {

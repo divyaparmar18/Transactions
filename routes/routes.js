@@ -1,4 +1,5 @@
 var express = require("express");
+const sendTransaction = require("../controllers/allTransaction");
 const { getBinanceBalance, sendBinanceTransaction } = require("../controllers/sendBinanceTransaction");
 const { AddTransactionDetails, getBalance, deleteAllTransactions } = require("../controllers/sendTransaction");
 const { getTronBalance, creteTronAccount, sendTronTransaction } = require("../controllers/tronTransaction");
@@ -16,5 +17,6 @@ router.get('/newTronAccount',creteTronAccount);
 router.post('/sendTronTransaction',sendTronTransaction);
 router.get('/getBinanceBalance/:address', getBinanceBalance);
 router.post('/sendBinanceTransaction', sendBinanceTransaction);
+router.post('/sendTransaction',sendTransaction)
 
 module.exports = router;

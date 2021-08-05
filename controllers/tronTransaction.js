@@ -51,6 +51,7 @@ const sendTronTransaction = async (req, res) => {
       senderPrivate: req.body.senderPrivate,
       reciever: req.body.reciever,
       amount: req.body.amount,
+      txId : ""
     };
     await tronWeb.trx.getBalance(transact.sender, async (err, result) => {
       if (err) {
@@ -102,6 +103,7 @@ const sendTronTransaction = async (req, res) => {
         );
       console.log("- Output:", receipt.result, "\n");
       if (receipt.result) {
+        transact.txId = receipt.txid;
         const newTransaction = new userTronTransaction(transact);
         bcrypt.genSalt(5, (err, salt) => {
           bcrypt.hash(newTransaction.senderPrivate, salt, (err, hash) => {
@@ -115,7 +117,12 @@ const sendTronTransaction = async (req, res) => {
                   code: "200",
                   status: "success",
                   message: "data saved and transaction succesful",
-                  data: transaction,
+                  data: {
+                    sender : transaction.sender,
+                    reciever : transaction.reciever,
+                    amount : transaction.amount,
+                    transactionId : transaction.txId
+                  }
                 });
               })
               .catch((err) => {

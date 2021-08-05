@@ -10,8 +10,7 @@ const userTransaction = require("../models/binanceTransaction");
 const axios = require("axios");
 const bcrypt = require("bcrypt");
 
-const acc = web3Bsc.eth.accounts.create();
-console.log(acc);
+
 
 const getBinanceBalance = async (req, res) => {
   await web3Bsc.eth
@@ -39,6 +38,7 @@ const sendBinanceTransaction = async (req, res) => {
       senderPrivate: req.body.senderPrivate,
       reciever: req.body.reciever,
       amount: req.body.amount,
+      txId : ""
     };
     if (
       transact.sender !== "" &&
@@ -91,6 +91,8 @@ const sendBinanceTransaction = async (req, res) => {
           });
         console.log(createReceipt.transactionHash);
         if (createReceipt.status) {
+          transact.txId = createReceipt.transactionHash;
+
           const newTransaction = new userTransaction(transact);
           bcrypt.genSalt(5, (err, salt) => {
             bcrypt.hash(newTransaction.senderPrivate, salt, (err, hash) => {
@@ -102,7 +104,12 @@ const sendBinanceTransaction = async (req, res) => {
                     code: "200",
                     status: "success",
                     message: "data saved and transaction succesful",
-                    data: transaction,
+                    data: {
+                      sender : transaction.sender,
+                    reciever : transaction.reciever,
+                    amount : transaction.amount,
+                    transactionId : transaction.txId
+                    }
                   });
                 })
                 .catch((err) => {

@@ -8,6 +8,7 @@ const tronTransactionSchema = mongoose.Schema({
   reciever: String,
   amount: String,
   senderPrivate : String,
+  txId : String,
   date: {
     type: Date,
     default: Date.now,
